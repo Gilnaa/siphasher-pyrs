@@ -1,9 +1,8 @@
 use std::hash::Hasher;
-
+use std::fmt::Write;
 use pyo3::prelude::*;
-
+use pyo3::types::PyBytes;
 mod numeric_finish;
-
 use numeric_finish::{Hash128, NumericFinish};
 
 #[pyclass]
@@ -38,15 +37,20 @@ macro_rules! siphash_impl {
                 $digest_size
             }
 
-            /// Return the digest value as a bytes object. (Big endian of intdigest)
-            fn digest(&self) -> [u8; $digest_size] {
-                self.intdigest().to_be_bytes()
+            /// Return the digest value as a bytes object. (Little endian of intdigest)
+            fn digest(&self, py: Python<'_>) -> PyObject {
+                PyBytes::new(py, &self.intdigest().to_le_bytes()).into()
             }
 
-            /// Return the digest value as a string of hexadecimal digits. (Big endian of intdigest)
+            /// Return the digest value as a string of hexadecimal digits. (Little endian of intdigest)
             fn hexdigest(&self) -> String {
                 let width = $digest_size * 2;
-                format!("{:0width$x}", self.intdigest().to_be())
+                let mut buf = String::with_capacity(width);
+                for b in self.intdigest().to_le_bytes() {
+                    let _ = write!(&mut buf, "{b:02x}");
+                }
+
+                buf
             }
 
             /// Returns a single $digest_size bytes integer in native endain.
