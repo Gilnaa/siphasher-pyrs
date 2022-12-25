@@ -1,0 +1,1 @@
+A [PyO3](https://pyo3.rs/) wrapper around [siphasher](https://crates.io/crates/siphasher)
